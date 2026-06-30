@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tehzeeb AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F3; --bg-2:#FFFFFF; --surface:#FFFFFF; --surface-2:#F0EFEB;
+    --line:#11131A1f; --line-solid:#1A1C22;
+    --cyan:#0E8C7A; --violet:#5B4FC4; --amber:#B5650A;
+    --text:#0E0F12; --text-dim:#5C6070;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  button{ touch-action:manipulation; font-family:inherit; }
+  html,body{ height:100%; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  body{
+    display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden; position:relative;
+    background:
+      radial-gradient(1100px 550px at 50% -10%, #0E0F1208 0%, transparent 60%),
+      radial-gradient(800px 500px at 90% 8%, #5B4FC410 0%, transparent 55%),
+      var(--bg);
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:0.6;
+    background-image: radial-gradient(rgba(14,15,18,0.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  /* ===== Header ===== */
+  header{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px;
+    background:rgba(255,255,255,0.8); backdrop-filter: blur(14px); border-bottom:1px solid var(--line);
+    flex-shrink:0; position:relative; z-index:5; }
+  .icon-btn{ background:var(--surface); border:1px solid var(--line-solid); color:var(--text);
+    width:38px; height:38px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all .2s ease; }
+  .icon-btn:hover{ border-color:var(--cyan); box-shadow:0 0 14px rgba(14,140,122,0.25); }
+  .icon-btn svg{ width:18px; height:18px; }
+  .header-right{ display:flex; gap:8px; align-items:center; }
+
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-orb{ width:26px; height:26px; border-radius:50%; position:relative; flex-shrink:0;
+    background: conic-gradient(from 180deg, var(--cyan), var(--violet), var(--amber), var(--cyan));
+    filter: drop-shadow(0 0 8px rgba(14,140,122,0.5)); animation: spin 4s linear infinite; }
+  .brand-orb::after{ content:""; position:absolute; inset:3px; border-radius:50%; background:var(--bg-2); }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .brand h1{ font-family:'Space Grotesk', sans-serif; font-size:17px; font-weight:700; letter-spacing:-0.01em; }
+
+  /* ===== Drawer ===== */
+  .drawer-overlay{ position:fixed; inset:0; background:rgba(4,5,8,0.55); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .25s; z-index:30; }
+  .drawer-overlay.open{ opacity:1; pointer-events:auto; }
+  .drawer{ position:fixed; top:0; left:0; height:100vh; height:100dvh; width:84%; max-width:300px;
+    background:var(--bg-2); border-right:1px solid var(--line-solid); z-index:31;
+    transform:translateX(-105%); transition:transform .32s cubic-bezier(.16,1,.3,1);
+    padding:18px 16px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
+  .drawer.open{ transform:translateX(0); }
+  .drawer h3{ font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:500; margin-bottom:8px; margin-top:14px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.12em; }
+  .drawer h3:first-child{ margin-top:0; }
+  .new-chat-btn{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg,var(--cyan),var(--violet));
+    color:#fff; border:none; border-radius:10px; padding:11px; font-weight:700; font-size:12.5px; cursor:pointer; margin-bottom:6px; }
+  .chat-list{ display:flex; flex-direction:column; gap:3px; max-height:46vh; overflow-y:auto; }
+  .chat-item{ display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:9px; cursor:pointer; font-size:12.5px; color:var(--text-dim); transition:all .15s; }
+  .chat-item:hover{ background:var(--surface); color:var(--text); }
+  .chat-item.active{ background:var(--surface-2); color:var(--text); border:1px solid var(--line-solid); }
+  .chat-item-title{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-del{ background:none; border:none; color:var(--text-dim); cursor:pointer; opacity:0; font-size:13px; padding:2px 5px; }
+  .chat-item:hover .chat-del{ opacity:1; }
+  .chat-del:hover{ color:#d23; }
+  .chat-empty{ font-size:11.5px; color:var(--text-dim); padding:10px; }
+  .drawer-bottom{ margin-top:auto; display:flex; flex-direction:column; gap:8px; padding-top:12px; border-top:1px solid var(--line); }
+  .profile-row{ display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; }
+  .profile-avatar{ width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--violet)); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
+  .profile-name{ font-size:13px; font-weight:600; flex:1; }
+  .drawer-item{ display:flex; align-items:center; gap:10px; background:none; border:1px solid transparent; text-align:left;
+    padding:10px 11px; border-radius:10px; font-size:12.5px; font-weight:500; color:var(--text-dim); cursor:pointer; transition:all .2s ease; width:100%; }
+  .drawer-item:hover{ background:var(--surface); border-color:var(--line-solid); color:var(--text); }
+
+  /* ===== API key gate screen ===== */
+  .gate{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); padding:24px; }
+  .gate-card{ width:100%; max-width:360px; background:var(--surface); border:1px solid var(--line-solid); border-radius:18px; padding:26px 22px; }
+  .gate-orb{ width:48px; height:48px; border-radius:50%; margin:0 auto 16px;
+    background: conic-gradient(from 180deg, var(--cyan), var(--violet), var(--amber), var(--cyan));
+    filter: drop-shadow(0 0 14px rgba(14,140,122,0.45)); animation: spin 4s linear infinite; position:relative; }
+  .gate-orb::after{ content:""; position:absolute; inset:5px; border-radius:50%; background:var(--surface); }
+  .gate h2{ font-family:'Space Grotesk',sans-serif; font-size:19px; text-align:center; margin-bottom:6px; }
+  .gate p{ font-size:12.5px; color:var(--text-dim); text-align:center; line-height:1.6; margin-bottom:18px; }
+  .gate label{ font-size:10.5px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; letter-spacing:0.04em; display:block; margin-bottom:6px; }
+  .gate input{ width:100%; background:var(--surface-2); border:1px solid var(--line-solid); color:var(--text); border-radius:9px;
+    padding:11px 12px; font-size:12.5px; font-family:'JetBrains Mono',monospace; outline:none; margin-bottom:10px; }
+  .gate input:focus{ border-color:var(--cyan); }
+  .gate-btn{ width:100%; background:linear-gradient(135deg,var(--cyan),var(--violet)); color:#fff; border:none; border-radius:10px;
+    padding:12px; font-weight:700; font-size:13px; cursor:pointer; margin-top:4px; }
+  .gate-err{ font-size:11.5px; color:#d23; margin-top:6px; display:none; }
+  .gate-err.show{ display:block; }
+  .gate-link{ font-size:11px; color:var(--cyan); text-align:center; margin-top:14px; display:block; text-decoration:none; }
+
+  /* ===== Avatar zone (3D brain) ===== */
+  .avatar-zone{ height:150px; flex-shrink:0; position:relative; border-bottom:1px solid var(--line); }
+  #avatarCanvas{ width:100%; height:100%; display:block; }
+  .avatar-status{ position:absolute; bottom:8px; left:50%; transform:translateX(-50%); }
+  .status-pill{ display:flex; align-items:center; gap:5px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.04em;
+    padding:4px 11px; border-radius:20px; background:rgba(255,255,255,.85); border:1px solid var(--line-solid); backdrop-filter:blur(6px); box-shadow:0 2px 10px rgba(14,15,18,0.06); }
+  .status-dot{ width:6px; height:6px; border-radius:50%; background:var(--cyan); }
+  .status-dot.thinking{ animation:pulseDot 1s infinite; background:var(--violet); }
+  @keyframes pulseDot{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* ===== Chat ===== */
+  #chat{ flex:1; overflow-y:auto; padding:22px 18px; display:flex; flex-direction:column; gap:18px; position:relative; z-index:2; }
+  #chat::-webkit-scrollbar{ width:5px; }
+  #chat::-webkit-scrollbar-thumb{ background:var(--line-solid); border-radius:10px; }
+  .empty-state{ margin:auto; text-align:center; color:var(--text-dim); padding:20px; }
+  .empty-state h2{ font-family:'Space Grotesk',sans-serif; font-size:18px; color:var(--text); margin-bottom:6px; }
+  .empty-state p{ font-size:13px; line-height:1.6; }
+
+  .row{ display:flex; flex-direction:column; max-width:84%; animation:fadeIn .3s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  .row.user{ align-self:flex-end; align-items:flex-end; }
+  .row.bot{ align-self:flex-start; align-items:flex-start; }
+  .tag{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; padding:0 4px; }
+  .row.bot .tag{ color:var(--cyan); font-weight:600; }
+  .bubble{ padding:13px 17px; border-radius:14px; font-size:14.5px; line-height:1.6; word-wrap:break-word; white-space:pre-wrap; }
+  .row.user .bubble{ background:var(--surface-2); color:var(--text); border:1px solid var(--line-solid); border-top-right-radius:4px; }
+  .row.bot .bubble{ background:linear-gradient(180deg, var(--surface), var(--bg-2)); border:1px solid var(--line); border-top-left-radius:4px; box-shadow: 0 0 24px rgba(14,140,122,0.04); }
+  .typing{ display:flex; gap:4px; padding:4px 0; }
+  .typing span{ width:6px; height:6px; border-radius:50%; background:var(--cyan); animation:tBounce 1.2s infinite; }
+  .typing span:nth-child(2){ animation-delay:.15s; }
+  .typing span:nth-child(3){ animation-delay:.3s; }
+  @keyframes tBounce{ 0%,60%,100%{ transform:translateY(0); opacity:.5; } 30%{ transform:translateY(-4px); opacity:1; } }
+
+  /* ===== Input bar ===== */
+  .input-wrap{ flex-shrink:0; padding:12px 14px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);
+    background:rgba(255,255,255,0.85); backdrop-filter:blur(14px); position:relative; z-index:5; }
+  .input-bar{ display:flex; align-items:flex-end; gap:8px; background:var(--surface); border:1px solid var(--line-solid);
+    border-radius:18px; padding:8px 8px 8px 14px; }
+  .input-bar textarea{ flex:1; border:none; outline:none; background:transparent; resize:none; font-family:'Inter',sans-serif;
+    font-size:14.5px; color:var(--text); max-height:120px; line-height:1.5; padding:6px 0; }
+  .input-bar textarea::placeholder{ color:var(--text-dim); }
+  .round-btn{ width:36px; height:36px; border-radius:50%; border:none; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+  .round-btn svg{ width:17px; height:17px; }
+  .mic-btn{ background:var(--surface-2); border:1px solid var(--line-solid); color:var(--text); }
+  .mic-btn.recording{ background:#d23; color:#fff; border-color:#d23; animation:pulseDot 1s infinite; }
+  .send-btn{ background:linear-gradient(135deg,var(--cyan),var(--violet)); color:#fff; }
+  .send-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  ::selection{ background:rgba(14,140,122,0.25); }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<!-- ===== API KEY GATE ===== -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-orb"></div>
+    <h2>Tehzeeb AI</h2>
+    <p>Shuru karne ke liye apni Anthropic API key daalein. Ye key sirf tumhare is browser mein save hogi, kisi server pe nahi jaati.</p>
+    <label>ANTHROPIC API KEY</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button class="gate-btn" id="gateSubmit">Connect &amp; Start</button>
+    <div class="gate-err" id="gateErr">Key sahi nahi lag rahi. Dobara check karein.</div>
+    <a class="gate-link" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Apni API key yahan se banayein →</a>
+  </div>
+</div>
+
+<!-- ===== DRAWER ===== -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+  <h3>Tehzeeb AI</h3>
+  <button class="new-chat-btn" id="newChatBtn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    Naya Chat
+  </button>
+  <h3>Recents</h3>
+  <div class="chat-list" id="chatList"></div>
+
+  <div class="drawer-bottom">
+    <button class="drawer-item" id="resetKeyBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7M21 4v6h-6"/></svg>
+      API Key Reset Karein
+    </button>
+    <div class="profile-row">
+      <div class="profile-avatar" id="profileAvatar">T</div>
+      <div class="profile-name" id="profileName">Tehzeeb</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="icon-btn" id="menuBtn" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="brand">
+      <div class="brand-orb"></div>
+      <h1>Tehzeeb AI</h1>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="clearBtn" aria-label="Clear chat" title="Is chat ko clear karein">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ===== AVATAR ZONE ===== -->
+<div class="avatar-zone">
+  <canvas id="avatarCanvas"></canvas>
+  <div class="avatar-status">
+    <div class="status-pill"><div class="status-dot" id="statusDot"></div><span id="statusText">READY</span></div>
+  </div>
+</div>
+
+<!-- ===== CHAT ===== -->
+<div id="chat">
+  <div class="empty-state" id="emptyState">
+    <h2>Namaste 👋</h2>
+    <p>Main Tehzeeb AI hoon. Kuch bhi poochho, type karo ya mic dabao.</p>
+  </div>
+</div>
+
+<!-- ===== INPUT ===== -->
+<div class="input-wrap">
+  <div class="input-bar">
+    <textarea id="msgInput" rows="1" placeholder="Message likhein..."></textarea>
+    <button class="round-btn mic-btn" id="micBtn" aria-label="Voice input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4"/></svg>
+    </button>
+    <button class="round-btn send-btn" id="sendBtn" aria-label="Send">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Storage helpers ---------- */
+  const LS = {
+    get:(k,d)=>{ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+    set:(k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  /* ---------- API key gate ---------- */
+  const gate = document.getElementById('gate');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const gateSubmit = document.getElementById('gateSubmit');
+  const gateErr = document.getElementById('gateErr');
+
+  function getKey(){ return localStorage.getItem('tz_api_key') || ''; }
+  function setKey(k){ localStorage.setItem('tz_api_key', k); }
+  function clearKey(){ localStorage.removeItem('tz_api_key'); }
+
+  function showGate(){ gate.style.display='flex'; apiKeyInput.value=''; gateErr.classList.remove('show'); }
+  function hideGate(){ gate.style.display='none'; }
+
+  async function verifyKey(key){
+    try{
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key': key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:8, messages:[{role:'user',content:'hi'}] })
+      });
+      return res.ok || res.status === 400; // 400 could be minor param issue, but auth passed
+    }catch(e){ return false; }
+  }
+
+  gateSubmit.onclick = async () => {
+    const val = apiKeyInput.value.trim();
+    if (!val){ gateErr.textContent='Key daalna zaroori hai.'; gateErr.classList.add('show'); return; }
+    gateSubmit.disabled = true; gateSubmit.textContent='Verify ho raha hai...';
+    const ok = await verifyKey(val);
+    gateSubmit.disabled = false; gateSubmit.textContent='Connect & Start';
+    if (ok){ setKey(val); hideGate(); init(); }
+    else { gateErr.textContent='Key sahi nahi lag rahi. Dobara check karein.'; gateErr.classList.add('show'); }
+  };
+  apiKeyInput.addEventListener('keydown', e => { if(e.key==='Enter') gateSubmit.click(); });
+
+  document.getElementById('resetKeyBtn').onclick = () => {
+    if (confirm('API key reset karna chahte hain? Aapko dobara key daalni hogi.')){
+      clearKey();
+      closeDrawer();
+      showGate();
+    }
+  };
+
+  /* ---------- Drawer ---------- */
+  const drawer = document.getElementById('drawer');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  function openDrawer(){ drawer.classList.add('open'); drawerOverlay.classList.add('open'); renderChatList(); }
+  function closeDrawer(){ drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
+  document.getElementById('menuBtn').onclick = () => drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+  drawerOverlay.onclick = closeDrawer;
+
+  /* ---------- Chats data model ---------- */
+  let chats = LS.get('tz_chats', []);          // [{id, title, messages:[{role,content}]}]
+  let activeId = LS.get('tz_active_id', null);
+
+  function saveChats(){ LS.set('tz_chats', chats); LS.set('tz_active_id', activeId); }
+  function currentChat(){ return chats.find(c => c.id === activeId); }
+
+  function newChat(){
+    const c = { id: 'c'+Date.now(), title:'Naya Chat', messages:[] };
+    chats.unshift(c);
+    activeId = c.id;
+    saveChats();
+    renderMsgs();
+    renderChatList();
+  }
+
+  function renderChatList(){
+    const list = document.getElementById('chatList');
+    if (!chats.length){ list.innerHTML = '<div class="chat-empty">Abhi koi chat nahi hai.</div>'; return; }
+    list.innerHTML = '';
+    chats.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'chat-item' + (c.id === activeId ? ' active' : '');
+      item.innerHTML = `<span class="chat-item-title"></span><button class="chat-del" title="Delete">✕</button>`;
+      item.querySelector('.chat-item-title').textContent = c.title || 'Untitled';
+      item.onclick = (e) => {
+        if (e.target.closest('.chat-del')) return;
+        activeId = c.id; saveChats(); renderMsgs(); renderChatList(); closeDrawer();
+      };
+      item.querySelector('.chat-del').onclick = (e) => {
+        e.stopPropagation();
+        chats = chats.filter(x => x.id !== c.id);
+        if (activeId === c.id) activeId = chats[0] ? chats[0].id : null;
+        saveChats(); renderChatList(); renderMsgs();
+      };
+      list.appendChild(item);
+    });
+  }
+
+  document.getElementById('newChatBtn').onclick = () => { newChat(); closeDrawer(); };
+  document.getElementById('cl
